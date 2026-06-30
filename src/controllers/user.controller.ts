@@ -18,7 +18,7 @@ export class UserController {
   };
 
   getUserById = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
     const user = await this.userService.getUserById(id);
 
@@ -39,7 +39,7 @@ export class UserController {
   };
 
   updateUser = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
     const user = await this.userService.updateUser(id, req.body);
 
@@ -51,7 +51,7 @@ export class UserController {
   };
 
   deleteUser = async (req: Request<{ id: string }>, res: Response): Promise<void> => {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
     await this.userService.deleteUser(id);
 

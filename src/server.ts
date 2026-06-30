@@ -1,14 +1,9 @@
 import { app } from "./app.js";
 import { env } from "./config/env.js";
-import { connectDatabase } from "./database/connection.js";
+import { logger } from "./lib/logger.js";
 
-async function startServer() {
-  await connectDatabase();
-
-  app.listen(env.port, () => {
-    console.log(`Server is running on port ${env.port}`);
-    console.log(`API URL: http://localhost:${env.port}/api`);
-  });
-}
-
-startServer();
+app.listen(env.port, () => {
+  logger.info(`Server is running on port ${env.port}`);
+  logger.info(`API URL: http://localhost:${env.port}/api`);
+  logger.info(`Environment: ${env.nodeEnv}`);
+});

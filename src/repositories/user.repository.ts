@@ -1,83 +1,53 @@
-import { pool } from "../database/connection";
-import type { User, CreateUserDTO, UpdateUserDTO } from "../models/user.model";
+import { prisma } from "../lib/prisma";
+import type { User, Prisma } from "../../generated/prisma/client";
 
 export class UserRepository {
   async findAll(): Promise<User[]> {
-    const result = await pool.query<User>(
-      `SELECT id, name, email, password, created_at, updated_at 
-             FROM users
-             ORDER BY created_at DESC`,
-    );
-    return result.rows;
+    return prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+    });
   }
 
-  async findById(id: string): Promise<User | null> {
-    const result = await pool.query<User>(
-      `SELECT id, name, email, password, created_at, updated_at 
-             FROM users
-             WHERE id = $1`,
-      [id],
-    );
-
-    return result.rows[0] || null;
+  async findById(id: number): Promise<User | null> {
+    return prisma.user.findUnique({
+      where: { id },
+    });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const result = await pool.query<User>(
-      `SELECT id, name, email, password, created_at, updated_at 
-             FROM users
-             WHERE email = $1`,
-      [email],
-    );
-
-    return result.rows[0] || null;
+    return prisma.user.findUnique({
+      where: { email },
+    });
   }
 
-  async create(data: CreateUserDTO): Promise<User> {
-    const result = await pool.query<User>(
-      `INSERT INTO users (name, email, password)
-        VALUES ($1, $2, $3)
-        RETURNING id, name, email, password, created_at, updated_at`,
-      [data.name, data.email, data.password],
-    );
-
-    return result.rows[0];
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    return prisma.user.create({ data });
   }
 
-  async update(id: string, data: UpdateUserDTO): Promise<User | null> {
+  async update(id: number, data: Prisma.UserUpdateInput): Promise<User | null> {
     const existingUser = await this.findById(id);
 
     if (!existingUser) {
       return null;
     }
 
-    const result = await pool.query<User>(
-      `UPDATE users
-        SET
-         name = $1,
-         email = $2,
-         password = $3,
-         updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4
-        RETURNING id, name, email, password, created_at, updated_at`,
-      [
-        data.name ?? existingUser.name,
-        data.email ?? existingUser.email,
-        data.password ?? existingUser.password,
-        id,
-      ],
-    );
-
-    return result.rows[0];
+    return prisma.user.update({
+      where: { id },
+      data,
+    });
   }
 
-  async delete(id: string): Promise<boolean> {
-    const result = await pool.query(
-      `DELETE users 
-        WHERE id = $1`,
-      [id],
-    );
+  async delete(id: number): Promise<boolean> {
+    const existingUser = await this.findById(id);
 
-    return result.rowCount !== null && result.rowCount > 0;
+    if (!existingUser) {
+      return false;
+    }
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return true;
   }
 }

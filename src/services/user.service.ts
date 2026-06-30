@@ -1,5 +1,6 @@
-import type { User, CreateUserDTO, UpdateUserDTO } from "../models/user.model";
+import type { User, Prisma } from "../../generated/prisma/client";
 import { UserRepository } from "../repositories/user.repository";
+import { NotFoundError, ConflictError } from "../utils/appError";
 
 export class UserService {
   private userRepository: UserRepository;
@@ -12,41 +13,41 @@ export class UserService {
     return await this.userRepository.findAll();
   }
 
-  async getUserById(id: string): Promise<User> {
+  async getUserById(id: number): Promise<User> {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      throw new Error("User not found.");
+      throw new NotFoundError("User not found.");
     }
 
     return user;
   }
 
-  async createUser(data: CreateUserDTO): Promise<User> {
+  async createUser(data: Prisma.UserCreateInput): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(data.email);
 
     if (existingUser) {
-      throw new Error("User with that email already exists.");
+      throw new ConflictError("User with that email already exists.");
     }
 
     return this.userRepository.create(data);
   }
 
-  async updateUser(id: string, data: UpdateUserDTO): Promise<User> {
+  async updateUser(id: number, data: Prisma.UserUpdateInput): Promise<User> {
     const updatedUser = await this.userRepository.update(id, data);
 
     if (!updatedUser) {
-      throw new Error("User not found.");
+      throw new NotFoundError("User not found.");
     }
 
     return updatedUser;
   }
 
-  async deleteUser(id: string): Promise<void> {
+  async deleteUser(id: number): Promise<void> {
     const deleted = await this.userRepository.delete(id);
 
     if (!deleted) {
-      throw new Error("User not found.");
+      throw new NotFoundError("User not found.");
     }
   }
 }

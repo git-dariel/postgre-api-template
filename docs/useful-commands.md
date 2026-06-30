@@ -1,6 +1,6 @@
 # Useful Commands
 
-This document contains common commands for working with the **Express + TypeScript + PostgreSQL + Docker + pnpm** backend template.
+This document contains common commands for working with the **Express + TypeScript + PostgreSQL + Prisma ORM + pnpm** backend template.
 
 ---
 
@@ -15,14 +15,22 @@ pnpm init
 ### Install dependencies
 
 ```bash
-pnpm add express pg dotenv cors helmet morgan
+pnpm add express pg dotenv cors helmet morgan @prisma/client @prisma/adapter-pg
 ```
 
 ### Install development dependencies
 
 ```bash
-pnpm add -D typescript tsx nodemon @types/node @types/express @types/pg @types/cors @types/morgan
+pnpm add -D typescript tsx nodemon prisma @types/node @types/express @types/pg @types/cors @types/morgan
 ```
+
+### Initialize Prisma
+
+```bash
+npx prisma init
+```
+
+This creates `prisma/schema.prisma` and a `.env` file with a `DATABASE_URL` placeholder.
 
 ### Create TypeScript config
 
@@ -58,298 +66,99 @@ pnpm build
 pnpm start
 ```
 
-### Run database migration
+---
+
+## 3. Prisma ORM Commands
+
+### Generate Prisma client
+
+Regenerates the Prisma client after schema changes. Required after every `schema.prisma` update.
 
 ```bash
-pnpm db:migrate
+pnpm prisma:generate
+```
+
+### Format schema file
+
+Auto-formats `prisma/schema.prisma` for consistent styling.
+
+```bash
+pnpm prisma:format
+```
+
+### Push schema to database (no migration)
+
+Syncs the schema directly to the database without creating a migration file. Useful during prototyping.
+
+```bash
+pnpm prisma:push
+```
+
+> **Warning:** This can cause data loss if columns are removed. Use migrations for production databases.
+
+### Create and apply a migration
+
+Creates a new migration file and applies it to the database.
+
+```bash
+pnpm prisma:migrate
+```
+
+You will be prompted to name the migration (e.g. `add_user_table`).
+
+### Deploy migrations (production)
+
+Applies all pending migrations without prompting. Use this in CI/CD or production.
+
+```bash
+pnpm prisma:deploy
+```
+
+### Reset database
+
+Drops the database, re-creates it, and applies all migrations from scratch.
+
+```bash
+pnpm prisma:reset
+```
+
+> **Warning:** This deletes all data in the database.
+
+### Open Prisma Studio
+
+Opens a visual database browser at `http://localhost:5555`.
+
+```bash
+pnpm prisma:studio
+```
+
+### Check migration status
+
+Shows which migrations have been applied and which are pending.
+
+```bash
+npx prisma migrate status
+```
+
+### Validate schema
+
+Checks your `schema.prisma` for errors without generating anything.
+
+```bash
+npx prisma validate
+```
+
+### Pull schema from existing database
+
+Introspects an existing database and updates `schema.prisma` to match.
+
+```bash
+npx prisma db pull
 ```
 
 ---
 
-## 3. Docker Compose Commands
-
-### Start PostgreSQL and pgAdmin containers
-
-```bash
-docker compose up -d
-```
-
-The `-d` means detached mode. It runs the containers in the background.
-
-### Stop containers
-
-```bash
-docker compose down
-```
-
-### Stop containers and remove volumes
-
-```bash
-docker compose down -v
-```
-
-Use this only if you want to delete the PostgreSQL data stored in the Docker volume.
-
-### Restart containers
-
-```bash
-docker compose restart
-```
-
-### Rebuild and start containers
-
-```bash
-docker compose up -d --build
-```
-
-### View running containers
-
-```bash
-docker ps
-```
-
-### View all containers, including stopped containers
-
-```bash
-docker ps -a
-```
-
-### View container logs
-
-```bash
-docker logs express_ts_postgres
-```
-
-```bash
-docker logs express_ts_pgadmin
-```
-
-### Follow live container logs
-
-```bash
-docker logs -f express_ts_postgres
-```
-
-### Remove a container manually
-
-```bash
-docker rm express_ts_postgres
-```
-
-### Force remove a running container
-
-```bash
-docker rm -f express_ts_postgres
-```
-
----
-
-## 4. Docker Volume Commands
-
-### List Docker volumes
-
-```bash
-docker volume ls
-```
-
-### Inspect PostgreSQL volume
-
-```bash
-docker volume inspect express-ts-postgres-template_postgres_data
-```
-
-> Note: The actual volume name may be different depending on your project folder name.
-
-### Remove a Docker volume
-
-```bash
-docker volume rm express-ts-postgres-template_postgres_data
-```
-
-### Remove unused Docker volumes
-
-```bash
-docker volume prune
-```
-
-Be careful with this command because it removes unused Docker volumes.
-
----
-
-## 5. Docker Network Commands
-
-### List Docker networks
-
-```bash
-docker network ls
-```
-
-### Inspect Docker Compose network
-
-```bash
-docker network inspect express-ts-postgres-template_default
-```
-
-> Note: The actual network name may depend on your project folder name.
-
----
-
-## 6. PostgreSQL Container Commands
-
-### Open PostgreSQL shell inside the container
-
-```bash
-docker exec -it express_ts_postgres psql -U postgres -d express_ts_db
-```
-
-### List databases inside psql
-
-```sql
-\l
-```
-
-### Connect to a database inside psql
-
-```sql
-\c express_ts_db
-```
-
-### List tables inside psql
-
-```sql
-\dt
-```
-
-### Describe users table
-
-```sql
-\d users
-```
-
-### Select all users
-
-```sql
-SELECT * FROM users;
-```
-
-### Exit psql
-
-```sql
-\q
-```
-
----
-
-## 7. pgAdmin Access
-
-### pgAdmin URL
-
-```txt
-http://localhost:5050
-```
-
-### pgAdmin login
-
-```txt
-Email: admin@email.com
-Password: admin
-```
-
-### Add new PostgreSQL server in pgAdmin
-
-Go to:
-
-```txt
-Add New Server
-```
-
-### General tab
-
-```txt
-Name: Express TS PostgreSQL
-```
-
-### Connection tab
-
-```txt
-Host name/address: postgres
-Port: 5432
-Maintenance database: express_ts_db
-Username: postgres
-Password: postgres
-```
-
-Enable:
-
-```txt
-Save password
-```
-
-Then click **Save**.
-
-### Why use `postgres` as host?
-
-Because pgAdmin is running inside Docker. Inside Docker Compose, containers communicate using service names. In your `docker-compose.yml`, the PostgreSQL service name is:
-
-```yaml
-postgres:
-```
-
-So pgAdmin should connect using:
-
-```txt
-postgres
-```
-
-not:
-
-```txt
-localhost
-```
-
----
-
-## 8. Database Migration Commands
-
-### Run all migrations
-
-```bash
-pnpm db:migrate
-```
-
-### Example migration folder
-
-```txt
-src/database/migrations/
-├── 001_create_users_table.sql
-├── 002_create_posts_table.sql
-├── 003_add_role_to_users.sql
-└── 004_create_products_table.sql
-```
-
-### Recommended naming convention
-
-Use numbers so migrations run in the correct order:
-
-```txt
-001_create_users_table.sql
-002_create_products_table.sql
-003_create_orders_table.sql
-```
-
-Avoid random names like:
-
-```txt
-users.sql
-orders.sql
-products.sql
-```
-
-Order matters because some tables may depend on other tables.
-
----
-
-## 9. Common API Testing Commands Using curl
+## 4. Common API Testing Commands Using curl
 
 ### Check API health
 
@@ -399,7 +208,7 @@ curl -X DELETE http://localhost:5000/api/users/USER_ID_HERE
 
 ---
 
-## 10. Useful Troubleshooting Commands
+## 5. Useful Troubleshooting Commands
 
 ### Check if port 5432 is already used
 
@@ -413,20 +222,6 @@ netstat -ano | findstr :5432
 
 ```bash
 lsof -i :5432
-```
-
-### Check if port 5050 is already used
-
-#### Windows PowerShell
-
-```powershell
-netstat -ano | findstr :5050
-```
-
-#### macOS/Linux
-
-```bash
-lsof -i :5050
 ```
 
 ### Check if port 5000 is already used
@@ -457,37 +252,17 @@ kill -9 PID_HERE
 
 ---
 
-## 11. Reset Database Completely
+## 6. Reset Database Completely
 
-Use this when you want a clean PostgreSQL database from scratch.
-
-```bash
-docker compose down -v
-```
-
-Then start again:
+Reset via Prisma (drops + re-creates + applies all migrations):
 
 ```bash
-docker compose up -d
+pnpm prisma:reset
 ```
-
-Then run migrations:
-
-```bash
-pnpm db:migrate
-```
-
-This will delete the old database volume and recreate the tables.
 
 ---
 
-## 12. Recommended Daily Workflow
-
-### Start your database containers
-
-```bash
-docker compose up -d
-```
+## 7. Recommended Daily Workflow
 
 ### Run your backend server
 
@@ -495,34 +270,37 @@ docker compose up -d
 pnpm dev
 ```
 
-### When you add or update SQL migration files
+### When you update `prisma/schema.prisma`
 
 ```bash
-pnpm db:migrate
+pnpm prisma:migrate
 ```
 
-### Stop Docker containers after coding
+This creates a migration file and applies it. The Prisma client is auto-regenerated.
+
+### Browse your data visually
 
 ```bash
-docker compose down
+pnpm prisma:studio
 ```
 
 ---
 
-## 13. Quick Reference
+## 8. Quick Reference
 
 ```bash
+# Project
 pnpm install
 pnpm dev
 pnpm build
 pnpm start
-pnpm db:migrate
 
-docker compose up -d
-docker compose down
-docker compose down -v
-docker compose restart
-docker ps
-docker logs -f express_ts_postgres
-docker exec -it express_ts_postgres psql -U postgres -d express_ts_db
+# Prisma
+pnpm prisma:generate
+pnpm prisma:format
+pnpm prisma:push
+pnpm prisma:migrate
+pnpm prisma:deploy
+pnpm prisma:reset
+pnpm prisma:studio
 ```

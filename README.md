@@ -1,6 +1,6 @@
 # Postgre API Template
 
-A production-ready starter template for building REST APIs with Express, TypeScript, and PostgreSQL. The project includes a layered architecture, PostgreSQL connection pooling, SQL migrations, Docker-based local database services, and a sample users module.
+A production-ready starter template for building REST APIs with Express, TypeScript, PostgreSQL, and Prisma ORM. The project includes a layered architecture, Prisma for database access and migrations, Winston logging, middleware for error handling and validation, and a sample users module.
 
 ## Tech Stack
 
@@ -8,19 +8,20 @@ A production-ready starter template for building REST APIs with Express, TypeScr
 - TypeScript
 - Express 5
 - PostgreSQL
-- pg
-- Docker Compose
+- Prisma ORM
+- Winston
 - pnpm
 
 ## Features
 
-- Express application configured with security, CORS, JSON parsing, and request logging
-- PostgreSQL connection using a shared connection pool
-- SQL migration runner with migration tracking
-- Modular route, controller, service, and repository structure
-- Central async route error handling
-- Docker Compose setup for PostgreSQL and pgAdmin
-- Strict TypeScript configuration
+- Express application configured with security, CORS, JSON parsing, and structured request logging
+- Prisma ORM for type-safe database access and schema migrations
+- Winston logger with colorized console output, timestamps, and environment-based log levels
+- Custom error classes with proper HTTP status codes (`AppError`, `NotFoundError`, `BadRequestError`, `ConflictError`)
+- Global error handler middleware with structured error logging
+- Request body validation middleware
+- Modular route, controller, service, and repository architecture
+- Async route error handling
 
 ## Project Structure
 
@@ -32,29 +33,33 @@ src/
     env.ts                       Environment configuration
   controllers/
     user.controller.ts           User request handlers
-  database/
-    connection.ts                PostgreSQL pool and connection check
-    migrate.ts                   SQL migration runner
-    migrations/
-      001_create_users_table.sql Users table migration
-  models/
-    user.model.ts                User TypeScript interfaces
+  lib/
+    logger.ts                    Winston logger configuration
+    prisma.ts                    Prisma client instance
+  middlewares/
+    errorHandler.ts              Global error handler
+    notFoundHandler.ts           404 route handler
+    requestLogger.ts             HTTP request logger (Morgan + Winston)
+    validateBody.ts              Request body validation
   repositories/
-    user.repository.ts           Database access layer
+    user.repository.ts           Database access layer (Prisma)
   routes/
     index.ts                     API route entry point
     user.routes.ts               User routes
   services/
     user.service.ts              Business logic layer
   utils/
+    appError.ts                  Custom error classes
     asyncHandler.ts              Async Express handler wrapper
+prisma/
+  schema.prisma                  Prisma database schema
 ```
 
 ## Prerequisites
 
 - Node.js 20 or later
 - pnpm
-- Docker and Docker Compose
+- PostgreSQL database (local or hosted)
 
 ## Getting Started
 
@@ -64,27 +69,23 @@ Install dependencies:
 pnpm install
 ```
 
-Start PostgreSQL and pgAdmin:
-
-```bash
-docker compose up -d
-```
-
 Create a `.env` file in the project root:
 
 ```env
 PORT=5000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=express_ts_db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/your_database_name
 ```
 
-Run database migrations:
+Push the schema to your database:
 
 ```bash
-pnpm db:migrate
+pnpm prisma:push
+```
+
+Or create and apply a migration:
+
+```bash
+pnpm prisma:migrate
 ```
 
 Start the development server:
@@ -101,29 +102,25 @@ http://localhost:5000/api
 
 ## Available Scripts
 
-```bash
-pnpm dev
-```
+### Project
 
-Runs the API in development mode using `tsx watch`.
+| Script       | Description                                       |
+| ------------ | ------------------------------------------------- |
+| `pnpm dev`   | Run the API in development mode using `tsx watch` |
+| `pnpm build` | Compile TypeScript into the `dist` directory      |
+| `pnpm start` | Run the compiled application from `dist`          |
 
-```bash
-pnpm build
-```
+### Prisma
 
-Compiles TypeScript into the `dist` directory.
-
-```bash
-pnpm start
-```
-
-Runs the compiled application from `dist/server.js`.
-
-```bash
-pnpm db:migrate
-```
-
-Runs pending SQL migrations from `src/database/migrations`.
+| Script                 | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| `pnpm prisma:generate` | Regenerate Prisma client after schema changes           |
+| `pnpm prisma:format`   | Auto-format `prisma/schema.prisma`                      |
+| `pnpm prisma:push`     | Sync schema to database without creating a migration    |
+| `pnpm prisma:migrate`  | Create and apply a new migration                        |
+| `pnpm prisma:deploy`   | Apply pending migrations (production / CI)              |
+| `pnpm prisma:reset`    | Drop database, re-create, and apply all migrations      |
+| `pnpm prisma:studio`   | Open visual database browser at `http://localhost:5555` |
 
 ## API Endpoints
 
@@ -153,7 +150,7 @@ Returns a single user by ID.
 POST /api/users
 ```
 
-Creates a new user.
+Creates a new user. Required fields: `email`, `password`.
 
 Request body:
 
@@ -187,73 +184,48 @@ DELETE /api/users/:id
 
 Deletes a user by ID.
 
-## Database
+## Prisma Schema
 
-The Docker Compose configuration starts:
+The database schema is defined in `prisma/schema.prisma`. After editing the schema:
 
-- PostgreSQL on port `5432`
-- pgAdmin on port `5050`
+1. Run `pnpm prisma:migrate` to create a migration and apply it
+2. The Prisma client is automatically regenerated
 
-Default pgAdmin credentials:
+To browse your data visually:
 
-```text
-Email: admin@email.com
-Password: admin
-```
-
-Default PostgreSQL credentials:
-
-```text
-Host: localhost
-Port: 5432
-User: postgres
-Password: postgres
-Database: express_ts_db
-```
-
-## Migrations
-
-Migration files are stored in:
-
-```text
-src/database/migrations
-```
-
-The migration runner creates a `schema_migrations` table to track executed files. Migration files are executed in sorted order, so use a numbered naming convention:
-
-```text
-001_create_users_table.sql
-002_add_profiles_table.sql
-003_add_indexes.sql
+```bash
+pnpm prisma:studio
 ```
 
 ## Environment Variables
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `PORT` | API server port | `5000` |
-| `DB_HOST` | PostgreSQL host | `localhost` |
-| `DB_PORT` | PostgreSQL port | `5432` |
-| `DB_USER` | PostgreSQL user | `postgres` |
-| `DB_PASSWORD` | PostgreSQL password | `postgres` |
-| `DB_NAME` | PostgreSQL database name | `express_ts_db` |
+| Variable       | Description                                | Default       |
+| -------------- | ------------------------------------------ | ------------- |
+| `PORT`         | API server port                            | `5000`        |
+| `DATABASE_URL` | PostgreSQL connection string               | —             |
+| `NODE_ENV`     | Environment (`development` / `production`) | `development` |
 
-## Build and Run
+## Error Handling
 
-Build the project:
+The template includes a structured error handling system:
 
-```bash
-pnpm build
-```
+- **`AppError`** — base error class with `statusCode` and `isOperational` flag
+- **`NotFoundError`** — 404 errors (e.g. user not found)
+- **`BadRequestError`** — 400 errors (e.g. missing required fields)
+- **`ConflictError`** — 409 errors (e.g. duplicate email)
+- Unexpected errors return `500 Internal Server Error` and log the full stack trace
 
-Start the compiled server:
+## Logging
 
-```bash
-pnpm start
-```
+Winston is configured with:
+
+- Colorized console output for readability
+- Timestamps in `YYYY-MM-DD HH:mm:ss` format
+- Error stack traces for unexpected errors
+- Log level: `debug` in development, `warn` in production
+- HTTP request logging via Morgan piped through Winston
 
 ## Notes
 
 - Passwords are currently stored as plain text in the sample users module. Add hashing before using this template in a real application.
-- The default error handler returns error messages directly. Adjust this behavior before deploying public APIs.
-- The generated `dist` directory is build output and should usually be excluded from version control.
+- The generated `dist` directory is build output and should be excluded from version control.
