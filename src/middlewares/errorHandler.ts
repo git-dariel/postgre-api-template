@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/appError";
+import { isAppError } from "../utils/appError";
 import { logger } from "../lib/logger";
 
 export function errorHandler(error: Error, _req: Request, res: Response, _next: NextFunction): void {
-  if (error instanceof AppError) {
+  if (isAppError(error)) {
     logger.warn(error.message);
 
     res.status(error.statusCode).json({

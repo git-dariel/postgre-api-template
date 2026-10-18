@@ -5,9 +5,10 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/src/server.js",
+    "prisma:create-db": "pnpm dlx create-db@latest --interactive --copy",
     "prisma:generate": "npx prisma generate",
     "prisma:format": "npx prisma format",
     "prisma:push": "npx prisma db push",

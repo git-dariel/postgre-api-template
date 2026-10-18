@@ -16,8 +16,9 @@ A production-ready starter template for building REST APIs with Express, TypeScr
 
 - Express application configured with security, CORS, JSON parsing, and structured request logging
 - Prisma ORM for type-safe database access and schema migrations
+- Database connectivity verification before the HTTP server starts
 - Winston logger with colorized console output, timestamps, and environment-based log levels
-- Custom error classes with proper HTTP status codes (`AppError`, `NotFoundError`, `BadRequestError`, `ConflictError`)
+- Custom error factories with proper HTTP status codes
 - Global error handler middleware with structured error logging
 - Request body validation middleware
 - Modular route, controller, service, and repository architecture
@@ -49,7 +50,7 @@ src/
   services/
     user.service.ts              Business logic layer
   utils/
-    appError.ts                  Custom error classes
+    appError.ts                  Custom error factories and type guard
     asyncHandler.ts              Async Express handler wrapper
 prisma/
   schema.prisma                  Prisma database schema
@@ -106,7 +107,7 @@ http://localhost:5000/api
 
 | Script       | Description                                       |
 | ------------ | ------------------------------------------------- |
-| `pnpm dev`   | Run the API in development mode using `tsx watch` |
+| `pnpm dev`   | Run the API in development mode using Nodemon and TSX |
 | `pnpm build` | Compile TypeScript into the `dist` directory      |
 | `pnpm start` | Run the compiled application from `dist`          |
 
@@ -114,6 +115,7 @@ http://localhost:5000/api
 
 | Script                 | Description                                             |
 | ---------------------- | ------------------------------------------------------- |
+| `pnpm prisma:create-db` | Create a temporary Prisma Postgres database             |
 | `pnpm prisma:generate` | Regenerate Prisma client after schema changes           |
 | `pnpm prisma:format`   | Auto-format `prisma/schema.prisma`                      |
 | `pnpm prisma:push`     | Sync schema to database without creating a migration    |
@@ -207,12 +209,12 @@ pnpm prisma:studio
 
 ## Error Handling
 
-The template includes a structured error handling system:
+The template includes a structured, function-based error handling system:
 
-- **`AppError`** — base error class with `statusCode` and `isOperational` flag
-- **`NotFoundError`** — 404 errors (e.g. user not found)
-- **`BadRequestError`** — 400 errors (e.g. missing required fields)
-- **`ConflictError`** — 409 errors (e.g. duplicate email)
+- **`appError`** — creates errors with a `statusCode` and `isOperational` flag
+- **`notFoundError`** — creates 404 errors (e.g. user not found)
+- **`badRequestError`** — creates 400 errors (e.g. missing required fields)
+- **`conflictError`** — creates 409 errors (e.g. duplicate email)
 - Unexpected errors return `500 Internal Server Error` and log the full stack trace
 
 ## Logging

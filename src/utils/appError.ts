@@ -1,31 +1,35 @@
-export class AppError extends Error {
-  public readonly statusCode: number;
-  public readonly isOperational: boolean;
+const appErrorMarker = Symbol("appError");
 
-  constructor(message: string, statusCode: number, isOperational = true) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isOperational = isOperational;
+export type AppError = Error & {
+  readonly statusCode: number;
+  readonly isOperational: boolean;
+  readonly [appErrorMarker]: true;
+};
 
-    Object.setPrototypeOf(this, new.target.prototype);
-    Error.captureStackTrace(this);
-  }
+export function appError(message: string, statusCode: number, isOperational = true): AppError {
+  const error = Object.assign(Error(message), {
+    statusCode,
+    isOperational,
+    [appErrorMarker]: true as const,
+  });
+
+  Error.captureStackTrace(error, appError);
+
+  return error;
 }
 
-export class NotFoundError extends AppError {
-  constructor(message = "Resource not found") {
-    super(message, 404);
-  }
+export function isAppError(error: unknown): error is AppError {
+  return error instanceof Error && appErrorMarker in error;
 }
 
-export class BadRequestError extends AppError {
-  constructor(message = "Bad request") {
-    super(message, 400);
-  }
+export function notFoundError(message = "Resource not found"): AppError {
+  return appError(message, 404);
 }
 
-export class ConflictError extends AppError {
-  constructor(message = "Resource already exists") {
-    super(message, 409);
-  }
+export function badRequestError(message = "Bad request"): AppError {
+  return appError(message, 400);
+}
+
+export function conflictError(message = "Resource already exists"): AppError {
+  return appError(message, 409);
 }

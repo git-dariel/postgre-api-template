@@ -1,53 +1,55 @@
 import type { User, Prisma } from "../../generated/prisma/client";
-import { UserRepository } from "../repositories/user.repository";
-import { NotFoundError, ConflictError } from "../utils/appError";
+import userRepository from "../repositories/user.repository";
+import { conflictError, notFoundError } from "../utils/appError";
 
-export class UserService {
-  private userRepository: UserRepository;
+const userService = {
+  getAll,
+  getById,
+  create,
+  update,
+  remove,
+};
 
-  constructor() {
-    this.userRepository = new UserRepository();
+export default userService;
+
+async function getAll(): Promise<User[]> {
+  return userRepository.getAll();
+}
+
+async function getById(id: number): Promise<User> {
+  const user = await userRepository.getById(id);
+
+  if (!user) {
+    throw notFoundError("User not found.");
   }
 
-  async getAllUsers(): Promise<User[]> {
-    return await this.userRepository.findAll();
+  return user;
+}
+
+async function create(data: Prisma.UserCreateInput): Promise<User> {
+  const existingUser = await userRepository.findByEmail(data.email);
+
+  if (existingUser) {
+    throw conflictError("User with that email already exists.");
   }
 
-  async getUserById(id: number): Promise<User> {
-    const user = await this.userRepository.findById(id);
+  return userRepository.create(data);
+}
 
-    if (!user) {
-      throw new NotFoundError("User not found.");
-    }
+async function update(id: number, data: Prisma.UserUpdateInput): Promise<User> {
+  const updatedUser = await userRepository.update(id, data);
 
-    return user;
+  if (!updatedUser) {
+    throw notFoundError("User not found.");
   }
 
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    const existingUser = await this.userRepository.findByEmail(data.email);
+  return updatedUser;
+}
 
-    if (existingUser) {
-      throw new ConflictError("User with that email already exists.");
-    }
+async function remove(id: number): Promise<void> {
+  const deleted = await userRepository.remove(id);
 
-    return this.userRepository.create(data);
-  }
-
-  async updateUser(id: number, data: Prisma.UserUpdateInput): Promise<User> {
-    const updatedUser = await this.userRepository.update(id, data);
-
-    if (!updatedUser) {
-      throw new NotFoundError("User not found.");
-    }
-
-    return updatedUser;
-  }
-
-  async deleteUser(id: number): Promise<void> {
-    const deleted = await this.userRepository.delete(id);
-
-    if (!deleted) {
-      throw new NotFoundError("User not found.");
-    }
+  if (!deleted) {
+    throw notFoundError("User not found.");
   }
 }

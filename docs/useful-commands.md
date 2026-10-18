@@ -70,6 +70,16 @@ pnpm start
 
 ## 3. Prisma ORM Commands
 
+### Create a temporary Prisma Postgres database
+
+Creates a temporary Prisma Postgres database, lets you select its region, and copies the generated connection string to your clipboard.
+
+```bash
+pnpm prisma:create-db
+```
+
+Replace the existing `DATABASE_URL` value in `.env` with the copied connection string. Open the generated claim URL within 24 hours if you want to keep the database.
+
 ### Generate Prisma client
 
 Regenerates the Prisma client after schema changes. Required after every `schema.prisma` update.
@@ -296,6 +306,7 @@ pnpm build
 pnpm start
 
 # Prisma
+pnpm prisma:create-db
 pnpm prisma:generate
 pnpm prisma:format
 pnpm prisma:push

@@ -1,53 +1,62 @@
 import { prisma } from "../lib/prisma";
 import type { User, Prisma } from "../../generated/prisma/client";
 
-export class UserRepository {
-  async findAll(): Promise<User[]> {
-    return prisma.user.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+const userRepository = {
+  getAll,
+  getById,
+  findByEmail,
+  create,
+  update,
+  remove,
+};
+
+export default userRepository;
+
+async function getAll(): Promise<User[]> {
+  return prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+async function getById(id: number): Promise<User | null> {
+  return prisma.user.findUnique({
+    where: { id },
+  });
+}
+
+async function findByEmail(email: string): Promise<User | null> {
+  return prisma.user.findUnique({
+    where: { email },
+  });
+}
+
+async function create(data: Prisma.UserCreateInput): Promise<User> {
+  return prisma.user.create({ data });
+}
+
+async function update(id: number, data: Prisma.UserUpdateInput): Promise<User | null> {
+  const existingUser = await getById(id);
+
+  if (!existingUser) {
+    return null;
   }
 
-  async findById(id: number): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { id },
-    });
+  return prisma.user.update({
+    where: { id },
+    data,
+  });
+}
+
+async function remove(id: number): Promise<boolean> {
+  const existingUser = await getById(id);
+
+  if (!existingUser) {
+    return false;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { email },
-    });
-  }
+  await prisma.user.delete({
+    where: { id },
+  });
 
-  async create(data: Prisma.UserCreateInput): Promise<User> {
-    return prisma.user.create({ data });
-  }
-
-  async update(id: number, data: Prisma.UserUpdateInput): Promise<User | null> {
-    const existingUser = await this.findById(id);
-
-    if (!existingUser) {
-      return null;
-    }
-
-    return prisma.user.update({
-      where: { id },
-      data,
-    });
-  }
-
-  async delete(id: number): Promise<boolean> {
-    const existingUser = await this.findById(id);
-
-    if (!existingUser) {
-      return false;
-    }
-
-    await prisma.user.delete({
-      where: { id },
-    });
-
-    return true;
-  }
+  return true;
 }
