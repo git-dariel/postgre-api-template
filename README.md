@@ -23,6 +23,8 @@ A production-ready starter template for building REST APIs with Express, TypeScr
 - Request body validation middleware
 - Modular route, controller, service, and repository architecture
 - Async route error handling
+- Password hashing with bcrypt and password-safe user responses
+- Focused service tests using the Node.js test runner
 
 ## Project Structure
 
@@ -105,24 +107,25 @@ http://localhost:5000/api
 
 ### Project
 
-| Script       | Description                                       |
-| ------------ | ------------------------------------------------- |
+| Script       | Description                                           |
+| ------------ | ----------------------------------------------------- |
 | `pnpm dev`   | Run the API in development mode using Nodemon and TSX |
-| `pnpm build` | Compile TypeScript into the `dist` directory      |
-| `pnpm start` | Run the compiled application from `dist`          |
+| `pnpm build` | Compile TypeScript into the `dist` directory          |
+| `pnpm test`  | Run focused tests with the Node.js test runner        |
+| `pnpm start` | Run the compiled application from `dist`              |
 
 ### Prisma
 
-| Script                 | Description                                             |
-| ---------------------- | ------------------------------------------------------- |
+| Script                  | Description                                             |
+| ----------------------- | ------------------------------------------------------- |
 | `pnpm prisma:create-db` | Create a temporary Prisma Postgres database             |
-| `pnpm prisma:generate` | Regenerate Prisma client after schema changes           |
-| `pnpm prisma:format`   | Auto-format `prisma/schema.prisma`                      |
-| `pnpm prisma:push`     | Sync schema to database without creating a migration    |
-| `pnpm prisma:migrate`  | Create and apply a new migration                        |
-| `pnpm prisma:deploy`   | Apply pending migrations (production / CI)              |
-| `pnpm prisma:reset`    | Drop database, re-create, and apply all migrations      |
-| `pnpm prisma:studio`   | Open visual database browser at `http://localhost:5555` |
+| `pnpm prisma:generate`  | Regenerate Prisma client after schema changes           |
+| `pnpm prisma:format`    | Auto-format `prisma/schema.prisma`                      |
+| `pnpm prisma:push`      | Sync schema to database without creating a migration    |
+| `pnpm prisma:migrate`   | Create and apply a new migration                        |
+| `pnpm prisma:deploy`    | Apply pending migrations (production / CI)              |
+| `pnpm prisma:reset`     | Drop database, re-create, and apply all migrations      |
+| `pnpm prisma:studio`    | Open visual database browser at `http://localhost:5555` |
 
 ## API Endpoints
 
@@ -229,5 +232,5 @@ Winston is configured with:
 
 ## Notes
 
-- Passwords are currently stored as plain text in the sample users module. Add hashing before using this template in a real application.
+- User passwords are hashed with bcrypt before persistence and omitted from API responses.
 - The generated `dist` directory is build output and should be excluded from version control.
